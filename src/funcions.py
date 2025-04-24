@@ -203,3 +203,36 @@ def text_to_textnodes(text):
                 new_nodes = flatten_list(new_nodes)
                
     return new_nodes
+
+def markdown_to_blocks(markdown):
+    blocks = []
+    lines = markdown.strip().split("\n\n")
+    full_list = []
+    full_paragraph = []
+
+    for line in lines:
+        # splits every splitted block from markdown on new line i.e. checks if a block spans on multiple lines
+        block_lines = line.split("\n")
+        # if len == 1 then one line = one block
+        if len(block_lines) == 1:
+            blocks.append(line.strip())   
+        else:
+            for line in block_lines:
+                line = line.strip()
+
+                if line.startswith("-"):
+                    full_list.append(line)
+                else: 
+                    full_paragraph.append(line)
+
+            if len(full_list) != 0: 
+                blocks.append("\n".join(full_list))
+            if len(full_paragraph) != 0:
+                blocks.append("\n".join(full_paragraph))
+            
+            full_paragraph = []
+            full_list = []
+
+    return blocks
+
+            
