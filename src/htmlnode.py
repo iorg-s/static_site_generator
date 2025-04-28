@@ -54,9 +54,6 @@ class ParentNode(HTMLNode):
             raise ValueError("Must have a child")
         text = ""
         for child in self.children:
-            if isinstance(child, LeafNode):
-                text += child.to_html()
-            else:
-                text += child.to_html()
+            text += child.to_html()
         
         return f"<{self.tag}{self.props_to_html()}>{text}</{self.tag}>"
