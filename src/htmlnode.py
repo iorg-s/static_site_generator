@@ -54,6 +54,7 @@ class ParentNode(HTMLNode):
             raise ValueError("Must have a child")
         text = ""
         for child in self.children:
+
             text += child.to_html()
         
         return f"<{self.tag}{self.props_to_html()}>{text}</{self.tag}>"

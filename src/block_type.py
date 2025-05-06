@@ -22,7 +22,7 @@ def block_to_block_type(block):
     unordered_list_line_count = 0
     ordered_list_line_count = 0
     for line in lines:
-        if line.startswith("> "):
+        if line.startswith(">"):
             quote_line_count += 1
         if line.startswith("- "):
             unordered_list_line_count += 1

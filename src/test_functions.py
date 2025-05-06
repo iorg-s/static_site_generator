@@ -8,27 +8,36 @@ class TestSplitNodesDelimiter(unittest.TestCase):
     def test_simple_code(self):
         node = TextNode("This is text with a `code block` word", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
-        self.assertEqual(new_nodes[0][0], TextNode("This is text with a ", TextType.TEXT))
-        self.assertEqual(new_nodes[0][1], TextNode("code block", TextType.CODE))
-        self.assertEqual(new_nodes[0][2], TextNode(" word", TextType.TEXT))
+        self.assertEqual(new_nodes[0], TextNode("This is text with a ", TextType.TEXT))
+        self.assertEqual(new_nodes[1], TextNode("code block", TextType.CODE))
+        self.assertEqual(new_nodes[2], TextNode(" word", TextType.TEXT))
 
     def test_full_bold(self):
         node = TextNode("**This is a full bold text**", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-        self.assertEqual(new_nodes[0][0] ,TextNode("This is a full bold text", TextType.BOLD))
+        self.assertEqual(new_nodes[0] ,TextNode("This is a full bold text", TextType.BOLD))
 
     def test_bold_start(self):
         node = TextNode("**THIS** is bold", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-        self.assertEqual(new_nodes[0][0], TextNode("THIS", TextType.BOLD))
-        self.assertEqual(new_nodes[0][1], TextNode(" is bold", TextType.TEXT))
+        print("\n")
+        print(new_nodes)
+        print("\n")
+        self.assertEqual(new_nodes[0], TextNode("THIS", TextType.BOLD))
+        self.assertEqual(new_nodes[1], TextNode(" is bold", TextType.TEXT))
 
     def test_bold_end(self):
         node = TextNode("This is **BOLD**", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-        self.assertEqual(new_nodes[0][0], TextNode("This is ", TextType.TEXT))
-        self.assertEqual(new_nodes[0][1], TextNode("BOLD", TextType.BOLD))
+        self.assertEqual(new_nodes[0], TextNode("This is ", TextType.TEXT))
+        self.assertEqual(new_nodes[1], TextNode("BOLD", TextType.BOLD))
     
+    def test_numerous_delimeters_of_the_same_type(self):
+        node = TextNode("**BOLD** and **BOLD AGAIN**",TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+        self.assertEqual(new_nodes[0], TextNode("BOLD", TextType.BOLD))
+        self.assertEqual(new_nodes[1], TextNode(" and ", TextType.TEXT))
+        self.assertEqual(new_nodes[2], TextNode("BOLD AGAIN", TextType.BOLD))
     def test_no_matching_delimiter(self):
         with self.assertRaises(ValueError) as context:
             new_nodes = split_nodes_delimiter([TextNode("This is **BOLD", TextType.TEXT)], "**", TextType.BOLD)
@@ -166,6 +175,13 @@ class TestSplitText(unittest.TestCase):
          new_nodes
     )
         
+    def test_split_links_one_link(self):
+        node = TextNode("[< Back Home](/)", TextType.TEXT)
+        new_nodes = split_nodes_link([node])
+        self.assertEqual([
+            TextNode("< Back Home", TextType.LINK, "/")
+        ], new_nodes)
+        
     def test_text_to_text_node(self):
         text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
         text_nodes = text_to_textnodes(text)
@@ -250,6 +266,16 @@ class TestSplitByBlock(unittest.TestCase):
             html,
             "<div><p>This is <b>bolded</b> paragraph\ntext in a p\ntag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
         )
+    
+    def test_list(self):
+        md = """
+        1. **An Unnecessary Interlude**: The encounter with Tom, while quaint and endearing, serves as a temporal diversion that detracts from the urgency of the Fellowship's quest.
+        2. **An Outlier in Purpose**: His escapades, while rich in mirth, add little to the central narrative, raising questions about their relevance in the grand design of Middle-earth.       
+        """
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html,
+        "<div><ol><li><b>An Unnecessary Interlude</b>: The encounter with Tom, while quaint and endearing, serves as a temporal diversion that detracts from the urgency of the Fellowship's quest.</li><li><b>An Outlier in Purpose</b>: His escapades, while rich in mirth, add little to the central narrative, raising questions about their relevance in the grand design of Middle-earth.</li></ol></div>")
 
     def test_codeblock(self):
         md = """
@@ -322,4 +348,17 @@ class TestSplitByBlock(unittest.TestCase):
     """
         node = markdown_to_html_node(md)
         html = node.to_html()
+    def test_extract_heade(self):
+        md = """
+        # Hello world!"""
+        header = extract_title(md)
+        self.assertEqual(header, "Hello world!")
+
+    def test_extract_header_no_header(self):
+        md = """Hello world"""
+        
+        with self.assertRaises(SyntaxError) as context:
+            header = extract_title(md)
+        self.assertEqual(str(context.exception),  "Markdown document does not contain an H1 header.")
+
     
