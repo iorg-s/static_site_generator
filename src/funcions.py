@@ -319,7 +319,7 @@ def extract_title(markdown):
         raise SyntaxError("Markdown document does not contain an H1 header.")
     return header
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path} ...")
     file = open(from_path)
     template = open(template_path)
@@ -330,17 +330,19 @@ def generate_page(from_path, template_path, dest_path):
     html_string = markdown_to_html_node(file_content).to_html()
     page_title = extract_title(file_content)
     page_content = template_content.replace("{{ Title }}", page_title).replace("{{ Content }}", html_string)
+    page_content = page_content.replace("href=\"/",f"href=\"{basepath}").replace("src=\"/", f"src=\"{basepath}")
+    print(os.getcwd())
     html_page = open(os.path.join(dest_path, "index.html"), "x")
     html_page.write(page_content)
     html_page.close()
 
-def generate_pages_recursive(dir_path_content = "/home/iorg/workspace/static_site_generator/content", template_path="/home/iorg/workspace/static_site_generator/template.html", dest_dir_path="/home/iorg/workspace/static_site_generator/public"):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     content = os.listdir(dir_path_content)
     for item in content:
         if os.path.isfile(os.path.join(dir_path_content, item)):
-            generate_page(os.path.join(dir_path_content, item), template_path, dest_dir_path)
+            generate_page(os.path.join(dir_path_content, item), template_path, dest_dir_path, basepath)
         else:
             if os.path.exists(os.path.join(dest_dir_path, item)):
                 shutil.rmtree(os.path.join(dest_dir_path, item))
             os.mkdir(os.path.join(dest_dir_path, item))
-            generate_pages_recursive(os.path.join(dir_path_content, item), template_path, os.path.join(dest_dir_path, item))
+            generate_pages_recursive(os.path.join(dir_path_content, item), template_path, os.path.join(dest_dir_path, item), basepath)
